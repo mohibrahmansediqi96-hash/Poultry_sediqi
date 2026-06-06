@@ -87,6 +87,10 @@ def suggest_disease(symptoms_text):
             for k,s in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]]
 
 def init_db():
+    pass
+
+with app.app_context():
+    pass
     conn = get_db()
     cur = conn.cursor()
     if DATABASE_URL:
@@ -411,3 +415,5 @@ if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
+with app.app_context():
+    init_db()
