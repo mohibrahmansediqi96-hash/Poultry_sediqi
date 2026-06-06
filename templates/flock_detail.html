@@ -1,0 +1,755 @@
+{% extends "base.html" %}
+{% block title %}گله #{{ summary.flock.id }} - مرغداری صدیقی{% endblock %}
+{% block extra_head %}
+<style>
+.section-title {
+  font-size:16px; font-weight:800; color:#fbbf24;
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:16px;
+}
+.chicken-grow {
+  display:flex; align-items:center; gap:6px;
+  padding:12px 16px;
+  background:linear-gradient(135deg, #111827, #1a2340);
+  border-radius:12px;
+  border:1px solid #1e2d4a;
+}
+.grow-stage { text-align:center; opacity:0.3; transition:all 0.3s; }
+.grow-stage.current { opacity:1; transform:scale(1.3); filter:drop-shadow(0 0 8px rgba(245,166,35,0.5)); }
+.grow-stage.past { opacity:0.6; }
+.grow-label { font-size:9px; color:#475569; margin-top:2px; }
+</style>
+{% endblock %}
+{% block content %}
+
+<!-- Header -->
+<div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+  <div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-sm"><i class="fas fa-arrow-right"></i></a>
+      <h1 style="font-size:22px; font-weight:800; color:#fbbf24;">گله #{{ summary.flock.id }}</h1>
+      <span class="badge badge-blue">{{ summary.flock.breed }}</span>
+      <span class="badge badge-yellow">روز {{ summary.day }}</span>
+    </div>
+    <p style="color:#64748b; font-size:13px;">ورود: {{ summary.flock.entry_date }} | تعداد اولیه: {{ "{:,}".format(summary.flock.count) }} قطعه</p>
+  </div>
+  <div></div>
+</div>
+
+<!-- Chicken Growth Visual -->
+<div class="chicken-grow" style="margin-bottom:20px; overflow-x:auto;">
+  <div class="grow-stage {% if summary.day <= 3 %}current{% elif summary.day > 3 %}past{% endif %}">
+    <div style="font-size:20px;">🥚</div><div class="grow-label">ورود</div>
+  </div>
+  <div style="color:#1e2d4a; font-size:12px;">▸</div>
+  <div class="grow-stage {% if summary.day >= 4 and summary.day <= 7 %}current{% elif summary.day > 7 %}past{% endif %}">
+    <div style="font-size:24px;">🐣</div><div class="grow-label">روز ۱-۷</div>
+  </div>
+  <div style="color:#1e2d4a; font-size:12px;">▸</div>
+  <div class="grow-stage {% if summary.day >= 8 and summary.day <= 14 %}current{% elif summary.day > 14 %}past{% endif %}">
+    <div style="font-size:28px;">🐥</div><div class="grow-label">روز ۸-۱۴</div>
+  </div>
+  <div style="color:#1e2d4a; font-size:12px;">▸</div>
+  <div class="grow-stage {% if summary.day >= 15 and summary.day <= 21 %}current{% elif summary.day > 21 %}past{% endif %}">
+    <div style="font-size:32px;">🐤</div><div class="grow-label">روز ۱۵-۲۱</div>
+  </div>
+  <div style="color:#1e2d4a; font-size:12px;">▸</div>
+  <div class="grow-stage {% if summary.day >= 22 and summary.day <= 35 %}current{% elif summary.day > 35 %}past{% endif %}">
+    <div style="font-size:38px;">🐔</div><div class="grow-label">روز ۲۲-۳۵</div>
+  </div>
+  <div style="color:#1e2d4a; font-size:12px;">▸</div>
+  <div class="grow-stage {% if summary.day > 35 %}current{% endif %}">
+    <div style="font-size:46px;">🐓</div><div class="grow-label">کشتار</div>
+  </div>
+</div>
+
+<!-- Alerts -->
+{% if summary.vaccine_alerts %}
+<div class="alert alert-warning" style="margin-bottom:16px;">
+  <i class="fas fa-syringe"></i>
+  <strong>هشدار واکسیناسیون!</strong> روز 
+  {% for v in summary.vaccine_alerts %}{{ v }}{% if not loop.last %}, {% endif %}{% endfor %}
+  — واکسن باید زده شود
+</div>
+{% endif %}
+{% if summary.mortality_rate > 3 %}
+<div class="alert alert-danger" style="margin-bottom:16px;">
+  <i class="fas fa-skull-crossbones"></i>
+  <strong>هشدار تلفات!</strong> نرخ تلفات {{ summary.mortality_rate }}% از حد طبیعی (۳%) بالاتر است
+</div>
+{% endif %}
+{% if summary.fcr > 1.8 and summary.fcr > 0 %}
+<div class="alert alert-warning" style="margin-bottom:16px;">
+  <i class="fas fa-exclamation-triangle"></i>
+  <strong>FCR بالا!</strong> ضریب تبدیل {{ summary.fcr }} — بررسی کیفیت دان توصیه می‌شود
+</div>
+{% endif %}
+
+<!-- Key Stats -->
+<div class="stat-grid" style="margin-bottom:20px;">
+  <div class="stat-card" style="--accent-color:#3b82f6;">
+    <div class="stat-label">🐔 تعداد فعلی</div>
+    <div class="stat-value">{{ "{:,}".format(summary.current_count) }}</div>
+    <div class="stat-sub">تلفات: {{ summary.total_mortality }} | {{ summary.mortality_rate }}%</div>
+  </div>
+  <div class="stat-card" style="--accent-color:#22c55e;">
+    <div class="stat-label">⚖️ اوسط وزن</div>
+    <div class="stat-value">{{ summary.avg_weight }} <span style="font-size:12px;">kg</span></div>
+    <div class="stat-sub">معیار: {{ summary.std_weight }} kg</div>
+  </div>
+  <div class="stat-card" style="--accent-color:#f5a623;">
+    <div class="stat-label">🌾 FCR</div>
+    <div class="stat-value" style="color:{% if summary.fcr <= 1.65 %}#22c55e{% elif summary.fcr <= 1.8 %}#fbbf24{% else %}#ef4444{% endif %};">
+      {{ summary.fcr if summary.fcr > 0 else '—' }}
+    </div>
+    <div class="stat-sub">معیار: {{ summary.std_fcr }}</div>
+  </div>
+  <div class="stat-card" style="--accent-color:#a855f7;">
+    <div class="stat-label">💊 مصارف کل</div>
+    <div class="stat-value" style="font-size:16px;">{{ "{:,.0f}".format(summary.total_expenses) }}</div>
+    <div class="stat-sub">فی مرغ: {{ summary.expense_per_bird }}</div>
+  </div>
+  <div class="stat-card" style="--accent-color:{% if summary.profit_loss >= 0 %}#22c55e{% else %}#ef4444{% endif %};">
+    <div class="stat-label">💰 سود / زیان</div>
+    <div class="stat-value" style="color:{% if summary.profit_loss >= 0 %}#22c55e{% else %}#ef4444{% endif %}; font-size:16px;">
+      {% if summary.profit_loss >= 0 %}+{% endif %}{{ "{:,.0f}".format(summary.profit_loss) }}
+    </div>
+    <div class="stat-sub">درآمد: {{ "{:,.0f}".format(summary.total_revenue) }}</div>
+  </div>
+  <div class="stat-card" style="--accent-color:#06b6d4;">
+    <div class="stat-label">📈 EPD</div>
+    <div class="stat-value">{{ summary.epd }}</div>
+    <div class="stat-sub">شاخص عملکرد اروپایی</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" data-group="main" onclick="switchTab('tab-daily','main')"><i class="fas fa-calendar-day"></i> ثبت روزانه</button>
+  <button class="tab-btn" data-group="main" onclick="switchTab('tab-weight','main')"><i class="fas fa-weight"></i> وزن</button>
+  <button class="tab-btn" data-group="main" onclick="switchTab('tab-expenses','main')"><i class="fas fa-receipt"></i> مصارف</button>
+  <button class="tab-btn" data-group="main" onclick="switchTab('tab-sales','main')"><i class="fas fa-shopping-cart"></i> فروش</button>
+  <button class="tab-btn" data-group="main" onclick="switchTab('tab-health','main')"><i class="fas fa-heartbeat"></i> بهداشت</button>
+  <button class="tab-btn" data-group="main" onclick="switchTab('tab-vaccine','main')"><i class="fas fa-syringe"></i> واکسن</button>
+</div>
+
+<!-- Tab: Daily -->
+<div id="tab-daily" class="tab-content active" data-tab-group="main">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-plus-circle" style="color:#22c55e;"></i> ثبت روزانه</div>
+      </div>
+      <form action="{{ url_for('add_daily', flock_id=summary.flock.id) }}" method="POST">
+        <div class="form-group">
+          <label class="form-label">تاریخ</label>
+          <input type="date" name="record_date" class="form-control" id="todayDate" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">تلفات (قطعه)</label>
+            <input type="number" name="mortality" class="form-control" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">دان مصرفی (kg)</label>
+            <input type="number" name="feed_consumed" class="form-control" placeholder="0.0" step="0.1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">آب مصرفی (لیتر)</label>
+          <input type="number" name="water_consumed" class="form-control" placeholder="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">یادداشت</label>
+          <input type="text" name="notes" class="form-control" placeholder="توضیحات اضافی...">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          <i class="fas fa-save"></i> ذخیره
+        </button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-list"></i> آخرین رکوردها</div>
+        <span style="font-size:11px; color:#64748b;">دان معیار امروز: {{ summary.std_feed }}g/راس</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>تاریخ</th><th>روز</th><th>تلفات</th><th>دان (kg)</th><th>آب (L)</th></tr></thead>
+          <tbody>
+          {% for r in daily_records %}
+          <tr>
+            <td>{{ r.record_date }}</td>
+            <td><span class="badge badge-blue">{{ r.day_number }}</span></td>
+            <td style="color:{% if r.mortality > 0 %}#ef4444{% else %}#22c55e{% endif %};">{{ r.mortality }}</td>
+            <td>{{ r.feed_consumed }}</td>
+            <td>{{ r.water_consumed }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center; color:#475569; padding:20px;">هنوز رکوردی ثبت نشده</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Weight -->
+<div id="tab-weight" class="tab-content" data-tab-group="main">
+  <div style="display:grid; grid-template-columns:320px 1fr; gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-plus-circle" style="color:#3b82f6;"></i> ثبت وزن هفتگی</div></div>
+      <form action="{{ url_for('add_weight', flock_id=summary.flock.id) }}" method="POST">
+        <div class="form-group">
+          <label class="form-label">تاریخ</label>
+          <input type="date" name="record_date" class="form-control" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">هفته شماره</label>
+            <input type="number" name="week_number" class="form-control" placeholder="1" min="1" max="8" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">اوسط وزن (kg)</label>
+            <input type="number" name="avg_weight" class="form-control" placeholder="0.000" step="0.001" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">تعداد نمونه</label>
+          <input type="number" name="sample_count" class="form-control" placeholder="50" value="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">یادداشت</label>
+          <input type="text" name="notes" class="form-control" placeholder="توضیحات...">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fas fa-save"></i> ذخیره</button>
+      </form>
+      
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid #1e2d4a;">
+        <div style="font-size:12px; font-weight:700; color:#94a3b8; margin-bottom:8px;">وزن معیاری راس</div>
+        <div class="table-wrap" style="max-height:200px; overflow-y:auto;">
+          <table>
+            <thead><tr><th>هفته</th><th>معیار (kg)</th><th>ثبت شده</th></tr></thead>
+            <tbody>
+            {% for w in weight_records %}
+            <tr>
+              <td>{{ w.week_number }}</td>
+              <td>{{ ross_weight.get(w.week_number*7, '-') }}</td>
+              <td style="color:{% if w.avg_weight >= ross_weight.get(w.week_number*7, 0) %}#22c55e{% else %}#ef4444{% endif %};">
+                {{ w.avg_weight }}
+                {% set std = ross_weight.get(w.week_number*7, 0) %}
+                {% if std > 0 %}
+                  {% if w.avg_weight >= std %}
+                    <i class="fas fa-arrow-up" style="font-size:9px;"></i>
+                  {% else %}
+                    <i class="fas fa-arrow-down" style="font-size:9px;"></i>
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-chart-line" style="color:#22c55e;"></i> نمودار رشد</div></div>
+      <canvas id="weightChart" style="max-height:350px;"></canvas>
+      {% if weight_records %}
+      {% set latest = weight_records[-1] %}
+      {% set std_day = latest.week_number * 7 %}
+      {% set std_w = ross_weight.get(std_day, 0) %}
+      <div class="alert {% if latest.avg_weight >= std_w %}alert-success{% else %}alert-danger{% endif %}" style="margin-top:12px;">
+        <i class="fas {% if latest.avg_weight >= std_w %}fa-thumbs-up{% else %}fa-exclamation-triangle{% endif %}"></i>
+        وزن هفته {{ latest.week_number }}: {{ latest.avg_weight }} kg | معیار: {{ std_w }} kg |
+        {% if latest.avg_weight >= std_w %}
+          ✅ وزن گله طبیعی یا بالای معیار است
+        {% else %}
+          ⚠️ وزن گله {{ "%.0f"|format((std_w - latest.avg_weight)/std_w*100) }}% پایین‌تر از معیار — افزایش کیفیت دان توصیه می‌شود
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Expenses -->
+<div id="tab-expenses" class="tab-content" data-tab-group="main">
+  <div style="display:grid; grid-template-columns:320px 1fr; gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-plus-circle" style="color:#a855f7;"></i> ثبت مصرف</div></div>
+      <form action="{{ url_for('add_expense', flock_id=summary.flock.id) }}" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label class="form-label">تاریخ</label>
+          <input type="date" name="expense_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">دسته‌بندی</label>
+          <select name="category" class="form-control">
+            <option value="دان">🌾 دان</option>
+            <option value="دارو">💊 دارو</option>
+            <option value="واکسن">💉 واکسن</option>
+            <option value="سوخت">⛽ سوخت</option>
+            <option value="کارگر">👷 کارگر</option>
+            <option value="سایر">📦 سایر</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">مبلغ (افغانی)</label>
+          <input type="number" name="amount" class="form-control" placeholder="0" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">توضیحات</label>
+          <input type="text" name="description" class="form-control" placeholder="جزئیات...">
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-paperclip"></i> اتچ رسید</label>
+          <input type="file" name="receipt_image" class="form-control" accept="image/*,.pdf">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fas fa-save"></i> ذخیره</button>
+      </form>
+    </div>
+    
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-list"></i> لیست مصارف</div>
+        <div style="display:flex; gap:8px; font-size:12px;">
+          <span class="badge badge-purple">مجموع: {{ "{:,.0f}".format(summary.total_expenses) }}</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>تاریخ</th><th>دسته</th><th>مبلغ</th><th>توضیح</th><th>رسید</th></tr></thead>
+          <tbody>
+          {% for e in expenses %}
+          <tr>
+            <td>{{ e.expense_date }}</td>
+            <td>{{ e.category }}</td>
+            <td style="font-weight:700;">{{ "{:,.0f}".format(e.amount) }}</td>
+            <td style="color:#94a3b8; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ e.description or '—' }}</td>
+            <td>
+              {% if e.receipt_image %}
+              <a href="{{ url_for('static', filename='uploads/'+e.receipt_image) }}" target="_blank" class="btn btn-sm btn-ghost">
+                <i class="fas fa-image"></i>
+              </a>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center; color:#475569; padding:20px;">هنوز مصرفی ثبت نشده</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Sales -->
+<div id="tab-sales" class="tab-content" data-tab-group="main">
+  <div style="display:grid; grid-template-columns:320px 1fr; gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-plus-circle" style="color:#22c55e;"></i> ثبت فروش</div></div>
+      <form action="{{ url_for('add_sale', flock_id=summary.flock.id) }}" method="POST">
+        <div class="form-group">
+          <label class="form-label">تاریخ فروش</label>
+          <input type="date" name="sale_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">اسم مشتری</label>
+          <input type="text" name="customer_name" class="form-control" placeholder="نام مشتری" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">تعداد (قطعه)</label>
+            <input type="number" name="quantity" class="form-control" placeholder="0" min="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">مجموع وزن (kg)</label>
+            <input type="number" name="total_weight" class="form-control" placeholder="0.0" step="0.1" required id="saleWeight">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">قیمت فی کیلو (افغانی)</label>
+          <input type="number" name="price_per_kg" class="form-control" placeholder="0" step="0.01" required id="salePriceKg">
+        </div>
+        <div style="background:#1a2340; border-radius:8px; padding:10px; margin-bottom:12px;">
+          <div style="font-size:11px; color:#64748b; margin-bottom:4px;">مجموع پول (محاسبه خودکار)</div>
+          <div id="totalCalc" style="font-size:20px; font-weight:800; color:#22c55e;">۰ افغانی</div>
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; gap:10px; background:#1a2340; padding:10px; border-radius:8px;">
+          <input type="checkbox" name="receipt_paid" id="receipt_paid" style="width:16px; height:16px; accent-color:#22c55e;">
+          <label for="receipt_paid" style="font-size:12px; color:#94a3b8; cursor:pointer;">
+            ✅ رسید پرداخت شده
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label">یادداشت</label>
+          <input type="text" name="notes" class="form-control" placeholder="توضیحات...">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fas fa-save"></i> ثبت فروش</button>
+      </form>
+    </div>
+    
+    <div>
+      <!-- Customer Summary -->
+      {% if customer_summary %}
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header"><div class="card-title"><i class="fas fa-users" style="color:#06b6d4;"></i> خلاصه به تفکیک مشتری</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>مشتری</th><th>تعداد</th><th>وزن (kg)</th><th>مجموع</th><th>پرداخت شده</th><th>باقی</th></tr></thead>
+            <tbody>
+            {% for cname, cdata in customer_summary.items() %}
+            <tr>
+              <td style="font-weight:700; color:#fbbf24;">{{ cname }}</td>
+              <td>{{ "{:,}".format(cdata.quantity) }}</td>
+              <td>{{ "%.1f"|format(cdata.total_weight) }}</td>
+              <td style="font-weight:700;">{{ "{:,.0f}".format(cdata.total_amount) }}</td>
+              <td style="color:#22c55e;">{{ "{:,.0f}".format(cdata.paid) }}</td>
+              <td style="color:{% if cdata.unpaid > 0 %}#ef4444{% else %}#22c55e{% endif %}; font-weight:700;">
+                {{ "{:,.0f}".format(cdata.unpaid) }}
+                {% if cdata.unpaid > 0 %}<i class="fas fa-exclamation-circle"></i>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Sales List -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-list"></i> لیست فروشات</div>
+          <div style="display:flex; gap:8px; font-size:12px;">
+            <span class="badge badge-green">{{ "{:,.0f}".format(summary.total_revenue) }} افغانی</span>
+            <span class="badge badge-blue">{{ summary.total_weight_sold }} kg</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>تاریخ</th><th>مشتری</th><th>تعداد</th><th>وزن</th><th>فی/kg</th><th>مجموع</th><th>رسید</th></tr></thead>
+            <tbody>
+            {% for s in sales %}
+            <tr>
+              <td>{{ s.sale_date }}</td>
+              <td style="font-weight:600;">{{ s.customer_name }}</td>
+              <td>{{ "{:,}".format(s.quantity) }}</td>
+              <td>{{ "%.1f"|format(s.total_weight) }} kg</td>
+              <td>{{ s.price_per_kg }}</td>
+              <td style="font-weight:700; color:#22c55e;">{{ "{:,.0f}".format(s.total_amount) }}</td>
+              <td>
+                <button onclick="togglePayment({{ s.id }}, this)" 
+                        class="btn btn-sm {% if s.receipt_paid %}btn-success{% else %}btn-danger{% endif %}"
+                        title="کلیک برای تغییر وضعیت">
+                  {% if s.receipt_paid %}
+                    <i class="fas fa-check"></i> پرداخت
+                  {% else %}
+                    <i class="fas fa-times"></i> باقی
+                  {% endif %}
+                </button>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center; color:#475569; padding:20px;">هنوز فروشی ثبت نشده</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Health -->
+<div id="tab-health" class="tab-content" data-tab-group="main">
+  <div style="display:grid; grid-template-columns:340px 1fr; gap:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-plus-circle" style="color:#ef4444;"></i> ثبت علائم</div></div>
+      <form action="{{ url_for('add_health', flock_id=summary.flock.id) }}" method="POST">
+        <div class="form-group">
+          <label class="form-label">تاریخ</label>
+          <input type="date" name="record_date" class="form-control" required>
+        </div>
+
+        <!-- Smart symptom input -->
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-magic" style="color:#a855f7;"></i> علائم را بنویسید (هوشمند)</label>
+          <div style="position:relative;">
+            <textarea id="smartSymptoms" class="form-control" rows="3" 
+              placeholder="مثال: اسهال خونی، بی اشتهایی، کاهش وزن..."></textarea>
+            <button type="button" onclick="analyzeSymptoms()" 
+              style="position:absolute;bottom:8px;left:8px;padding:4px 12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:Vazirmatn,sans-serif;">
+              <i class="fas fa-search"></i> تشخیص
+            </button>
+          </div>
+        </div>
+
+        <!-- AI suggestions -->
+        <div id="diseaseSuggestions" style="display:none; margin-bottom:12px;">
+          <div style="font-size:11px;color:#a855f7;font-weight:700;margin-bottom:8px;"><i class="fas fa-lightbulb"></i> پیشنهادهای تشخیص:</div>
+          <div id="suggestionList"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">بیماری / تشخیص نهایی</label>
+          <select name="disease_key" class="form-control" id="diseaseSelect" onchange="fillDisease(this.value)">
+            <option value="">— انتخاب کنید —</option>
+            {% for key, d in diseases.items() %}
+            <option value="{{ key }}">{{ d.name }}</option>
+            {% endfor %}
+            <option value="custom">سایر</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">علائم نهایی</label>
+          <textarea name="symptoms" id="symptomsField" class="form-control" rows="2" placeholder="علائم..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">داروی پیشنهادی</label>
+          <textarea name="recommended_drugs" id="drugsField" class="form-control" rows="2" placeholder="داروها..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-danger" style="width:100%;"><i class="fas fa-save"></i> ثبت</button>
+      </form>
+    </div>
+    
+    <div>
+      <!-- Active health issues -->
+      {% if health_records %}
+      <div style="margin-bottom:16px;">
+        <div class="section-title"><i class="fas fa-virus" style="color:#ef4444;"></i> مشکلات فعال ({{ health_records|length }})</div>
+        {% for h in health_records %}
+        <div class="card" style="margin-bottom:12px; border-color:rgba(239,68,68,0.3);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:700; color:#fbbf24; margin-bottom:6px;">
+                {{ h.disease_key or 'نامشخص' }} — {{ h.record_date }}
+              </div>
+              <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">
+                <strong style="color:#e2e8f0;">علائم:</strong> {{ h.symptoms or '—' }}
+              </div>
+              <div style="font-size:12px; color:#86efac;">
+                <strong>داروی پیشنهادی:</strong> {{ h.recommended_drugs or '—' }}
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+              <form action="{{ url_for('use_drug', record_id=h.id) }}" method="POST" style="display:flex; gap:6px; align-items:center;">
+                <input type="text" name="used_drug" class="form-control" style="width:150px; font-size:11px;" placeholder="داروی استفاده شده..." required>
+                <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check"></i> اعمال</button>
+              </form>
+              <form action="{{ url_for('delete_health', record_id=h.id) }}" method="POST" onsubmit="return confirm('حذف شود؟')">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card" style="text-align:center; padding:40px; margin-bottom:16px;">
+        <div style="font-size:48px; margin-bottom:12px;">✅</div>
+        <div style="color:#22c55e; font-weight:600;">هیچ مشکل بهداشتی فعالی ثبت نشده</div>
+      </div>
+      {% endif %}
+      
+      <!-- Resolved -->
+      {% if resolved_records %}
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-history" style="color:#64748b;"></i> سابقه داروهای استفاده شده</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>تاریخ</th><th>بیماری</th><th>داروی استفاده شده</th></tr></thead>
+            <tbody>
+            {% for r in resolved_records %}
+            <tr>
+              <td>{{ r.record_date }}</td>
+              <td>{{ r.disease_key or '—' }}</td>
+              <td style="color:#22c55e;">{{ r.used_drug or '—' }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Vaccine -->
+<div id="tab-vaccine" class="tab-content" data-tab-group="main">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="fas fa-syringe" style="color:#fbbf24;"></i> برنامه واکسیناسیون</div></div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+      {% for v in vaccines %}
+      <div class="card" style="border-color:{% if v.done %}rgba(34,197,94,0.3){% elif summary.day >= v.vaccine_day %}rgba(239,68,68,0.5){% else %}#1e2d4a{% endif %}; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <div style="font-size:14px; font-weight:700; color:#fbbf24;">روز {{ v.vaccine_day }}</div>
+            <div style="font-size:12px; color:#94a3b8;">{{ v.vaccine_name }}</div>
+          </div>
+          <div>
+            {% if v.done %}
+            <span class="badge badge-green"><i class="fas fa-check"></i> انجام شد</span>
+            {% elif summary.day >= v.vaccine_day %}
+            <span class="badge badge-red"><i class="fas fa-exclamation"></i> عقب افتاده!</span>
+            {% else %}
+            <span class="badge badge-blue"><i class="fas fa-clock"></i> {{ v.vaccine_day - summary.day }} روز دیگر</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if v.done %}
+        <div style="font-size:11px; color:#22c55e;"><i class="fas fa-calendar-check"></i> {{ v.vaccine_date or '—' }}</div>
+        {% else %}
+        <form action="{{ url_for('mark_vaccine_done', vaccine_id=v.id) }}" method="POST" style="display:flex; gap:8px;">
+          <input type="text" name="notes" class="form-control" style="font-size:11px;" placeholder="یادداشت...">
+          <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check"></i> انجام شد</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+// Set today's date
+document.querySelectorAll('input[type=date]').forEach(el => {
+  if (!el.value) el.value = new Date().toISOString().split('T')[0];
+});
+
+// Weight chart
+const wc = {{ weight_chart|safe }};
+if (wc.labels.length > 0) {
+  new Chart(document.getElementById('weightChart'), {
+    type: 'line',
+    data: {
+      labels: wc.labels,
+      datasets: [
+        { label: 'وزن واقعی', data: wc.actual, borderColor: '#f5a623', backgroundColor: 'rgba(245,166,35,0.1)', tension: 0.4, pointRadius: 6, pointBackgroundColor: '#f5a623' },
+        { label: 'معیار Ross', data: wc.standard, borderColor: '#3b82f6', borderDash: [5,5], backgroundColor: 'transparent', tension: 0.4, pointRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Vazirmatn' } } } },
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { color: '#1e2d4a' } },
+        y: { ticks: { color: '#64748b' }, grid: { color: '#1e2d4a' } }
+      }
+    }
+  });
+}
+
+// Auto calc sale total
+function calcTotal() {
+  const w = parseFloat(document.getElementById('saleWeight')?.value || 0);
+  const p = parseFloat(document.getElementById('salePriceKg')?.value || 0);
+  const t = (w * p).toLocaleString('fa');
+  const el = document.getElementById('totalCalc');
+  if (el) el.textContent = t + ' افغانی';
+}
+document.getElementById('saleWeight')?.addEventListener('input', calcTotal);
+document.getElementById('salePriceKg')?.addEventListener('input', calcTotal);
+
+// Disease auto-fill from select
+const diseaseData = {{ diseases|tojson }};
+function fillDisease(key) {
+  if (key && diseaseData[key]) {
+    document.getElementById('symptomsField').value = Array.isArray(diseaseData[key].symptoms) 
+      ? diseaseData[key].symptoms.join('، ') 
+      : diseaseData[key].symptoms;
+    document.getElementById('drugsField').value = diseaseData[key].drugs;
+  } else {
+    document.getElementById('symptomsField').value = '';
+    document.getElementById('drugsField').value = '';
+  }
+}
+
+// Smart symptom analysis
+async function analyzeSymptoms() {
+  const symptoms = document.getElementById('smartSymptoms').value.trim();
+  if (!symptoms) return;
+  
+  const btn = event.currentTarget;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch('/api/suggest_disease', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symptoms})
+    });
+    const suggestions = await resp.json();
+    
+    const box = document.getElementById('diseaseSuggestions');
+    const list = document.getElementById('suggestionList');
+    
+    if (suggestions.length === 0) {
+      list.innerHTML = '<div style="font-size:12px;color:#94a3b8;">هیچ بیماری مطابقت نداشت. دستی انتخاب کنید.</div>';
+    } else {
+      list.innerHTML = suggestions.map((s, i) => `
+        <div onclick="selectSuggestion('${s.key}')" 
+          style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);
+                 border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;
+                 transition:all 0.2s;" 
+          onmouseover="this.style.background='rgba(168,85,247,0.2)'"
+          onmouseout="this.style.background='rgba(168,85,247,0.1)'">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:700;color:#e2e8f0;">${s.name}</span>
+            <span style="font-size:10px;background:rgba(168,85,247,0.3);color:#c084fc;padding:2px 8px;border-radius:4px;">
+              ${i===0?'احتمال زیاد':i===1?'احتمال متوسط':'احتمال کم'}
+            </span>
+          </div>
+          <div style="font-size:11px;color:#86efac;margin-top:4px;">💊 ${s.drugs}</div>
+        </div>
+      `).join('');
+    }
+    box.style.display = 'block';
+    // copy symptoms to field
+    document.getElementById('symptomsField').value = symptoms;
+  } catch(e) {
+    console.error(e);
+  }
+  btn.innerHTML = '<i class="fas fa-search"></i> تشخیص';
+  btn.disabled = false;
+}
+
+function selectSuggestion(key) {
+  document.getElementById('diseaseSelect').value = key;
+  fillDisease(key);
+  document.getElementById('diseaseSuggestions').style.display = 'none';
+}
+
+// Toggle payment
+function togglePayment(saleId, btn) {
+  fetch(`/sale/${saleId}/toggle_payment`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.paid) {
+        btn.className = 'btn btn-sm btn-success';
+        btn.innerHTML = '<i class="fas fa-check"></i> پرداخت';
+      } else {
+        btn.className = 'btn btn-sm btn-danger';
+        btn.innerHTML = '<i class="fas fa-times"></i> باقی';
+      }
+    });
+}
+
+// Tab switching
+function switchTab(tabId, groupId) {
+  document.querySelectorAll('[data-tab-group="' + groupId + '"]').forEach(t => t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelectorAll('[data-group="' + groupId + '"]').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+</script>
+{% endblock %}

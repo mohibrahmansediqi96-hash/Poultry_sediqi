@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ورود - مرغداری صدیقی</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: #0a0f1e;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    direction: rtl;
+    overflow: hidden;
+    position: relative;
+  }
+  .bg-anim {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(245,166,35,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(59,130,246,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .chickens-bg {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0 40px;
+    opacity: 0.07;
+    font-size: 80px;
+    pointer-events: none;
+    filter: blur(1px);
+  }
+  .login-wrap {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+  }
+  .logo-area {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo-icon {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #f5a623, #e8962a);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 32px rgba(245,166,35,0.4);
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .logo-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #fbbf24;
+    margin-bottom: 4px;
+  }
+  .logo-sub {
+    font-size: 13px;
+    color: #475569;
+  }
+  .login-card {
+    background: #111827;
+    border: 1px solid #1e2d4a;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .login-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 8px; font-weight: 600; }
+  .input-wrap { position: relative; }
+  .input-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #475569;
+    font-size: 14px;
+  }
+  .form-control {
+    width: 100%;
+    background: #0a0f1e;
+    border: 1px solid #1e2d4a;
+    border-radius: 10px;
+    padding: 12px 40px 12px 14px;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-family: 'Vazirmatn', sans-serif;
+    transition: border-color 0.2s;
+    direction: ltr;
+    text-align: left;
+  }
+  .form-control:focus { outline: none; border-color: #f5a623; }
+  .btn-login {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #f5a623, #e8962a);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Vazirmatn', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn-login:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245,166,35,0.4); }
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .divider {
+    text-align: center;
+    margin: 20px 0;
+    color: #1e2d4a;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #1e2d4a;
+  }
+  .farm-icons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    font-size: 24px;
+    opacity: 0.5;
+    filter: grayscale(1);
+  }
+</style>
+</head>
+<body>
+<div class="bg-anim"></div>
+<div class="chickens-bg">
+  <span>🐓</span><span>🐔</span><span>🐣</span><span>🐥</span><span>🐓</span>
+</div>
+<div class="login-wrap">
+  <div class="logo-area">
+    <div class="logo-icon">🐔</div>
+    <div class="logo-title">مرغداری صدیقی</div>
+    <div class="logo-sub">Sediqi Poultry Farm Management</div>
+  </div>
+  <div class="login-card">
+    <div class="login-title">ورود به سیستم</div>
+    {% if error %}
+    <div class="error-msg"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+    {% endif %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">نام کاربری</label>
+        <div class="input-wrap">
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" name="username" class="form-control" placeholder="username" autocomplete="off" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">رمز عبور</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" name="password" class="form-control" placeholder="password" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-login">
+        <i class="fas fa-sign-in-alt"></i> ورود
+      </button>
+    </form>
+    <div class="divider">🌾</div>
+    <div class="farm-icons">
+      <span title="دان">🌾</span>
+      <span title="واکسن">💉</span>
+      <span title="دارو">💊</span>
+      <span title="فروش">💰</span>
+      <span title="گزارش">📊</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

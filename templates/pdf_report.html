@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Vazirmatn', Arial, sans-serif; background:#fff; color:#1a1a2e; direction:rtl; padding:30px; font-size:13px; }
+  .header { text-align:center; border-bottom:3px solid #f5a623; padding-bottom:20px; margin-bottom:24px; }
+  .header h1 { font-size:26px; font-weight:800; color:#1a1a2e; margin-bottom:4px; }
+  .header .sub { color:#666; font-size:13px; }
+  .header .icon { font-size:50px; margin-bottom:8px; }
+  .section-title { font-size:15px; font-weight:800; color:#f5a623; border-bottom:2px solid #f5a623; padding-bottom:6px; margin:20px 0 12px; display:flex; align-items:center; gap:8px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
+  .stat-box { background:#f8f9fa; border:1px solid #e2e8f0; border-radius:10px; padding:12px; text-align:center; }
+  .stat-box .label { font-size:11px; color:#666; margin-bottom:4px; }
+  .stat-box .value { font-size:18px; font-weight:800; color:#1a1a2e; }
+  table { width:100%; border-collapse:collapse; margin-bottom:16px; }
+  th { background:#1a1a2e; color:#fff; padding:8px 10px; font-size:11px; text-align:right; }
+  td { padding:8px 10px; border-bottom:1px solid #e2e8f0; font-size:12px; }
+  tr:nth-child(even) td { background:#f8f9fa; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; }
+  .badge-green { background:#dcfce7; color:#166534; }
+  .badge-red { background:#fee2e2; color:#991b1b; }
+  .badge-yellow { background:#fef3c7; color:#92400e; }
+  .profit { color:#16a34a; font-weight:800; font-size:18px; }
+  .loss { color:#dc2626; font-weight:800; font-size:18px; }
+  .footer { margin-top:40px; text-align:center; color:#999; font-size:11px; border-top:1px solid #e2e8f0; padding-top:16px; }
+  .print-btn { position:fixed; bottom:20px; left:20px; background:#f5a623; color:#000; border:none; padding:12px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; font-size:14px; z-index:100; }
+  @media print { .print-btn { display:none; } }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ چاپ / ذخیره PDF</button>
+<div class="header">
+  <div class="icon">🐔</div>
+  <h1>مرغداری صدیقی</h1>
+  <div class="sub">Sediqi Poultry Farm — گزارش گله #{{ summary.flock.id }}</div>
+  <div class="sub">تاریخ گزارش: {{ summary.flock.created_at[:10] }} | روز فعلی: {{ summary.day }}</div>
+</div>
+
+<!-- Flock Info -->
+<div class="section-title">🐣 اطلاعات گله</div>
+<div class="stat-grid">
+  <div class="stat-box"><div class="label">تاریخ ورود</div><div class="value" style="font-size:14px;">{{ summary.flock.entry_date }}</div></div>
+  <div class="stat-box"><div class="label">تعداد اولیه</div><div class="value">{{ "{:,}".format(summary.flock.count) }}</div></div>
+  <div class="stat-box"><div class="label">نژاد</div><div class="value">{{ summary.flock.breed }}</div></div>
+  <div class="stat-box"><div class="label">روز پرورش</div><div class="value">{{ summary.day }}</div></div>
+  <div class="stat-box"><div class="label">تعداد فعلی</div><div class="value">{{ "{:,}".format(summary.current_count) }}</div></div>
+  <div class="stat-box"><div class="label">نرخ تلفات</div><div class="value">{{ summary.mortality_rate }}%</div></div>
+</div>
+
+<!-- Performance -->
+<div class="section-title">📈 عملکرد</div>
+<div class="stat-grid">
+  <div class="stat-box"><div class="label">اوسط وزن (kg)</div><div class="value">{{ summary.avg_weight }}</div></div>
+  <div class="stat-box"><div class="label">وزن معیاری (kg)</div><div class="value">{{ summary.std_weight }}</div></div>
+  <div class="stat-box"><div class="label">FCR</div><div class="value">{{ summary.fcr if summary.fcr > 0 else '—' }}</div></div>
+  <div class="stat-box"><div class="label">EPD</div><div class="value">{{ summary.epd }}</div></div>
+  <div class="stat-box"><div class="label">مجموع دان (kg)</div><div class="value">{{ summary.total_feed }}</div></div>
+  <div class="stat-box"><div class="label">دان معیار/راس (g)</div><div class="value">{{ summary.std_feed }}</div></div>
+</div>
+
+<!-- Financial -->
+<div class="section-title">💰 گزارش مالی</div>
+<div class="stat-grid">
+  <div class="stat-box"><div class="label">هزینه خرید جوجه</div><div class="value" style="font-size:13px;">{{ "{:,.0f}".format(summary.purchase_cost) }}</div></div>
+  <div class="stat-box"><div class="label">مصارف گله</div><div class="value" style="font-size:13px;">{{ "{:,.0f}".format(summary.total_expenses) }}</div></div>
+  <div class="stat-box"><div class="label">مصارف شخصی (جدا)</div><div class="value" style="font-size:13px;">{{ "{:,.0f}".format(summary.personal_expenses) }}</div></div>
+  <div class="stat-box"><div class="label">مجموع هزینه گله</div><div class="value" style="font-size:13px;">{{ "{:,.0f}".format(summary.total_cost) }}</div></div>
+  <div class="stat-box"><div class="label">درآمد فروش</div><div class="value" style="font-size:13px; color:#16a34a;">{{ "{:,.0f}".format(summary.total_revenue) }}</div></div>
+  <div class="stat-box"><div class="label">سود / زیان</div>
+    <div class="{% if summary.profit_loss >= 0 %}profit{% else %}loss{% endif %}">
+      {% if summary.profit_loss >= 0 %}+{% endif %}{{ "{:,.0f}".format(summary.profit_loss) }}
+    </div>
+  </div>
+</div>
+
+<!-- Expenses Table -->
+<div class="section-title">🧾 جزئیات مصارف</div>
+<table>
+  <thead><tr><th>تاریخ</th><th>دسته</th><th>مبلغ (افغانی)</th><th>توضیح</th><th>نوع</th></tr></thead>
+  <tbody>
+  {% for e in expenses %}
+  <tr>
+    <td>{{ e.expense_date }}</td>
+    <td>{{ e.category }}</td>
+    <td>{{ "{:,.0f}".format(e.amount) }}</td>
+    <td>{{ e.description or '—' }}</td>
+    <td><span class="badge {% if e.is_personal %}badge-yellow{% else %}badge-green{% endif %}">{% if e.is_personal %}شخصی{% else %}گله{% endif %}</span></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" style="text-align:center; color:#999;">ثبت نشده</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<!-- Sales Table -->
+<div class="section-title">🛒 جزئیات فروشات</div>
+<table>
+  <thead><tr><th>تاریخ</th><th>مشتری</th><th>تعداد</th><th>وزن (kg)</th><th>فی کیلو</th><th>مجموع</th><th>وضعیت</th></tr></thead>
+  <tbody>
+  {% for s in sales %}
+  <tr>
+    <td>{{ s.sale_date }}</td>
+    <td>{{ s.customer_name }}</td>
+    <td>{{ "{:,}".format(s.quantity) }}</td>
+    <td>{{ "%.1f"|format(s.total_weight) }}</td>
+    <td>{{ s.price_per_kg }}</td>
+    <td>{{ "{:,.0f}".format(s.total_amount) }}</td>
+    <td><span class="badge {% if s.receipt_paid %}badge-green{% else %}badge-red{% endif %}">{% if s.receipt_paid %}پرداخت شد{% else %}باقی است{% endif %}</span></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" style="text-align:center; color:#999;">ثبت نشده</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<!-- Health -->
+<div class="section-title">🏥 سابقه بهداشتی</div>
+<table>
+  <thead><tr><th>تاریخ</th><th>بیماری</th><th>علائم</th><th>دارو استفاده شده</th><th>وضعیت</th></tr></thead>
+  <tbody>
+  {% for h in health_records %}
+  <tr>
+    <td>{{ h.record_date }}</td>
+    <td>{{ h.disease_key or '—' }}</td>
+    <td style="max-width:200px;">{{ h.symptoms or '—' }}</td>
+    <td>{{ h.used_drug or '—' }}</td>
+    <td><span class="badge {% if h.resolved %}badge-green{% else %}badge-red{% endif %}">{% if h.resolved %}رفع شد{% else %}فعال{% endif %}</span></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" style="text-align:center; color:#999;">ثبت نشده</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="footer">
+  گزارش تولید شده توسط سیستم مرغداری صدیقی | Sediqi Poultry Farm Management System
+</div>
+</body>
+</html>

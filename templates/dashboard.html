@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}داشبورد - مرغداری صدیقی{% endblock %}
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h1 style="font-size:22px; font-weight:800; color:#fbbf24;">داشبورد مزرعه</h1>
+    <p style="color:#64748b; font-size:13px; margin-top:4px;">مدیریت تمام گله‌های فعال و آرشیو</p>
+  </div>
+  <a href="{{ url_for('new_flock') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> ثبت گله جدید
+  </a>
+</div>
+
+{% if not summaries %}
+<div style="text-align:center; padding:80px 20px;">
+  <div style="font-size:80px; margin-bottom:16px;">🐣</div>
+  <h2 style="color:#94a3b8; font-weight:600; margin-bottom:8px;">هنوز هیچ گله‌ای ثبت نشده</h2>
+  <p style="color:#475569; margin-bottom:20px;">برای شروع یک گله جدید ثبت کنید</p>
+  <a href="{{ url_for('new_flock') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> ثبت اولین گله
+  </a>
+</div>
+{% endif %}
+
+<div style="display:grid; gap:16px;">
+{% for s in summaries %}
+<div class="card" style="border-color: {% if s.vaccine_alerts %}#f5a623{% elif s.mortality_rate > 3 %}#ef4444{% else %}#1e2d4a{% endif %};">
+  <!-- Flock Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <!-- Chicken age visual -->
+      <div style="font-size:{% if s.day <= 7 %}28px{% elif s.day <= 21 %}36px{% elif s.day <= 35 %}44px{% else %}52px{% endif %}; 
+           filter: drop-shadow(0 2px 8px rgba(245,166,35,0.3));
+           transition: all 0.5s;">
+        {% if s.day <= 3 %}🐣{% elif s.day <= 7 %}🐥{% elif s.day <= 14 %}🐤{% elif s.day <= 28 %}🐔{% else %}🐓{% endif %}
+      </div>
+      <div>
+        <div style="font-size:16px; font-weight:800; color:#e2e8f0;">
+          گله #{{ s.flock.id }} 
+          <span style="font-size:12px; color:#64748b; font-weight:400;">
+            ({{ s.flock.breed }} — {{ s.flock.entry_date }})
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap;">
+          <span class="badge badge-blue"><i class="fas fa-calendar-day"></i> روز {{ s.day }}</span>
+          <span class="badge badge-yellow"><i class="fas fa-dove"></i> {{ "{:,}".format(s.current_count) }} قطعه</span>
+          {% if s.mortality_rate > 3 %}
+          <span class="badge badge-red"><i class="fas fa-skull"></i> تلفات {{ s.mortality_rate }}%</span>
+          {% else %}
+          <span class="badge badge-green"><i class="fas fa-heart"></i> تلفات {{ s.mortality_rate }}%</span>
+          {% endif %}
+          {% if s.vaccine_alerts %}
+          <span class="badge badge-yellow"><i class="fas fa-syringe"></i> هشدار واکسن روز {% for v in s.vaccine_alerts %}{{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <a href="{{ url_for('flock_detail', flock_id=s.flock.id) }}" class="btn btn-primary">
+      <i class="fas fa-eye"></i> مشاهده جزئیات
+    </a>
+  </div>
+  
+  <!-- Stats -->
+  <div class="stat-grid">
+    <div class="stat-card" style="--accent-color: #3b82f6;">
+      <div class="stat-label">وزن فعلی</div>
+      <div class="stat-value">{{ s.avg_weight }} <span style="font-size:12px;">kg</span></div>
+      <div class="stat-sub">معیار: {{ s.std_weight }} kg</div>
+      <div class="progress" style="margin-top:8px;">
+        <div class="progress-bar" style="width:{{ [s.avg_weight/s.std_weight*100 if s.std_weight else 0, 100]|min }}%; background:#3b82f6;"></div>
+      </div>
+    </div>
+    <div class="stat-card" style="--accent-color: #22c55e;">
+      <div class="stat-label">FCR فعلی</div>
+      <div class="stat-value" style="color: {% if s.fcr <= 1.65 %}#22c55e{% elif s.fcr <= 1.8 %}#fbbf24{% else %}#ef4444{% endif %};">
+        {{ s.fcr if s.fcr > 0 else '—' }}
+      </div>
+      <div class="stat-sub">معیار: {{ s.std_fcr }}</div>
+    </div>
+    <div class="stat-card" style="--accent-color: #a855f7;">
+      <div class="stat-label">مصارف / راس</div>
+      <div class="stat-value">{{ s.expense_per_bird }}</div>
+      <div class="stat-sub">مجموع: {{ "{:,.0f}".format(s.total_expenses) }}</div>
+    </div>
+    <div class="stat-card" style="--accent-color: {% if s.profit_loss >= 0 %}#22c55e{% else %}#ef4444{% endif %};">
+      <div class="stat-label">سود / زیان</div>
+      <div class="stat-value" style="color: {% if s.profit_loss >= 0 %}#22c55e{% else %}#ef4444{% endif %}; font-size:16px;">
+        {% if s.profit_loss >= 0 %}+{% endif %}{{ "{:,.0f}".format(s.profit_loss) }}
+      </div>
+      <div class="stat-sub">درآمد: {{ "{:,.0f}".format(s.total_revenue) }}</div>
+    </div>
+    <div class="stat-card" style="--accent-color: #f5a623;">
+      <div class="stat-label">EPD</div>
+      <div class="stat-value">{{ s.epd }}</div>
+      <div class="stat-sub">شاخص عملکرد اروپایی</div>
+    </div>
+    <div class="stat-card" style="--accent-color: #06b6d4;">
+      <div class="stat-label">فروش شده</div>
+      <div class="stat-value">{{ "{:,}".format(s.total_sold) }}</div>
+      <div class="stat-sub">{{ s.total_weight_sold }} kg</div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}
