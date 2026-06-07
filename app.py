@@ -10,7 +10,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # PostgreSQL or SQLite fallback
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://poultry_db_autu_user:e3lE4HC6xCtgbyF3GFWxAPO5fu7Rtvdw@dpg-d8hurqgjo6nc73cmqoeg-a/poultry_db_autu')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://poultry_db_autu_user:e3lE4HC6xCtgbyF3GFWxAPO5fu7Rtvdw@dpg-d8hurqgjo6nc73cmqoeg-a.oregon-postgres.render.com/poultry_db_autu')
 
 if DATABASE_URL:
     import psycopg2
