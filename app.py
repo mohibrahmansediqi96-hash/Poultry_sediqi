@@ -417,4 +417,4 @@ try:
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     init_db()
 except Exception as e:
-    print(f"DB init: {e}")
+    print(f"DB init ERROR: {e}", flush=True)
